@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->nullableMorphs('menuable');
             $table->string('name');
+            $table->string('description')->nullable();
             $table->string('type');
             $table->string('url')->nullable();
             $table->string('route')->nullable();
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->string('link_class')->nullable();
             $table->string('wrapper_class')->nullable();
             $table->json('parameters')->nullable();
-
+            $table->boolean('enabled')->default(true);
             $table->foreignIdFor(\Biostate\FilamentMenuBuilder\Models\Menu::class)->constrained()->cascadeOnDelete();
 
             $table->nestedSet();

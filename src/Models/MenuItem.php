@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Kalnoy\Nestedset\NodeTrait;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * @property MenuItemType $type
@@ -30,11 +31,13 @@ use Kalnoy\Nestedset\NodeTrait;
  */
 class MenuItem extends Model
 {
-    use HasFactory;
-    use NodeTrait;
+    use HasFactory,
+        NodeTrait,
+        HasTranslations;
 
     protected $fillable = [
         'name',
+        'description',
         'target',
         'type',
         'route',
@@ -53,6 +56,11 @@ class MenuItem extends Model
         'parameters' => 'collection',
         'route_parameters' => 'collection',
         'type' => MenuItemType::class,
+    ];
+
+    public array $translatable = [
+        'name',
+        'description'
     ];
 
     public $timestamps = false;
