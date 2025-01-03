@@ -2,10 +2,14 @@
 
 namespace Biostate\FilamentMenuBuilder\Filament\Resources;
 
+use App\Filament\Resources\Helper;
 use App\Models\Page;
+use Filament\Forms\Components\Section;
 use Biostate\FilamentMenuBuilder\Models\Menu;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\ActionSize;
@@ -38,15 +42,60 @@ class MenuResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                TextInput::make('name')
-                    ->label(__('filament-menu-builder::menu-builder.form_labels.name'))
-                    ->required()
-                    ->autofocus()
-                    ->placeholder('Name')
-                    ->maxLength(255),
-            ]);
+        return Helper::twoColumnsForm($form,
+            firstColumn: [
+                Section::make(__('filament-menu-builder::menu-builder.details'))
+                    ->icon('heroicon-o-folder')
+                    ->iconColor('primary')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->prefixIcon('heroicon-o-tag')
+                            ->prefixIconColor('secondary')
+                            ->label(__('filament-menu-builder::menu-builder.name.label'))
+                            ->helperText(__('filament-menu-builder::menu-builder.name.desc'))
+                            ->required()
+                            ->live(onBlur: true)
+                            ->maxLength(255)
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
+                                if (!empty(($get('slug') ?? ''))) {
+                                    return;
+                                }
+                                $set('slug', Str::slug($state));
+                            }),
+                        Forms\Components\TextInput::make('slug')
+                            ->prefixIcon('heroicon-o-tag')
+                            ->prefixIconColor('secondary')
+                            ->label(__('filament-menu-builder::menu-builder.slug.label'))
+                            ->helperText(__('filament-menu-builder::menu-builder.slug.desc'))
+                            ->required()
+                            ->disabledOn(['edit', 'view'])
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label(__('filament-menu-builder::menu-builder.description.label'))
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->helperText(__('filament-menu-builder::menu-builder.description.desc')),
+                    ])
+                    ->columns(2)
+                    ->inlineLabel(false),
+            ],
+            secondColumn: [
+                Section::make(__('filament-menu-builder::menu-builder.adjustments'))
+                    ->icon('heroicon-o-cog')
+                    ->iconColor('primary')
+                    ->schema([
+                        Forms\Components\Toggle::make('enabled')
+                            ->label(__('filament-menu-builder::menu-builder.enabled.label'))
+                            ->helperText(__('filament-menu-builder::menu-builder.enabled.desc'))
+                            ->onIcon('heroicon-o-check')
+                            ->offIcon('heroicon-o-x-mark')
+                            ->default(true)
+                            ->required(),
+                    ])->inlineLabel(false),
+            ],
+            helperText: __('filament-menu-builder::menu-builder.helper_text')
+        );
     }
 
     public static function table(Table $table): Table
@@ -58,12 +107,12 @@ class MenuResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('filament-menu-builder::menu-builder.form_labels.name'))
-                    ->description(fn (Page $record): string => Str::limit($record->description, 60))
-                    ->tooltip(fn (Page $record): string => strlen($record->description) > 60 ? $record->description : '')
+                    ->description(fn (Menu $record): string => Str::limit($record->description, 100))
+                    ->tooltip(fn (Menu $record): string => strlen($record->description) > 100 ? $record->description : '')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Component')
+                    ->label(__('filament-menu-builder::menu-builder.slug.label'))
                     ->copyable()
                     ->copyMessage(__('filament-menu-builder::menu-builder.component_copy_message'))
                     ->copyMessageDuration(3000)
@@ -87,7 +136,10 @@ class MenuResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('enabled')
+                    ->label(__('filament-menu-builder::menu-builder.enabled.label'))
+                    ->default(true),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\Action::make(__('filament-menu-builder::menu-builder.configure_menu'))
@@ -107,7 +159,11 @@ class MenuResource extends Resource
                     ->tooltip(__('filament-actions::delete.single.label')),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
+                ]),
             ]);
     }
 

@@ -6,7 +6,7 @@ use Biostate\FilamentMenuBuilder\Filament\Resources\MenuResource;
 use Biostate\FilamentMenuBuilder\Models\Menu;
 use Filament\Actions\Action;
 use Filament\Pages\Actions;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\BaseClasses\EditRecord;
 use Filament\Resources\Pages\ViewRecord\Concerns\Translatable;
 
 class EditMenu extends EditRecord
@@ -29,7 +29,7 @@ class EditMenu extends EditRecord
                 ->color('primary')
                 ->icon('heroicon-o-globe-alt'),
             Actions\DeleteAction::make()
-                ->icon('heroicon-o-pencil'),
+                ->icon('heroicon-o-trash'),
             Actions\ForceDeleteAction::make()
                 ->icon('heroicon-o-trash'),
             Actions\RestoreAction::make()
